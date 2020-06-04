@@ -14,7 +14,7 @@ python portscanner.py -u ip_address
 ```
 Or
 ```
-python portscanner.py -url ip_address
+python portscanner.py --url ip_address
 ```
 
 ### Upcoming
