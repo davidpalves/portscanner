@@ -1,42 +1,69 @@
-import socket, sys
+import socket
 import argparse
+
 from rich.progress import track
 from rich.console import Console
 
+from helpers import validate_port_range, print_result
 
-def scan_ports(ip_address):
-    console = Console()
-    console.print("\n")
-    
-    open_ports = []
-    error = False
+open_ports = []
+console = Console()
 
-    for port in track(range(0, 65535), f"[dim yellow]Scanning IP {ip_address}[/dim yellow]"):
-        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
+def scan_ports(ip_address, port):
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+    if s.connect_ex((ip_address, port)) == 0:
+        open_ports.append(port)
+        s.close()
+
+    return open_ports
+
+
+def run_scan(ip_address, lowest_port=0, highest_port=65535):
+    found_ports = []
+
+    try:
+        validate_port_range(lowest_port, highest_port)
+    except Exception as e:
+        if hasattr(e, 'message'):
+            console.print(e.message, style="bold red")
+        else:
+            console.print(e, style="bold red")
+        return
+
+    for port in track(
+        range(lowest_port, highest_port+1), f"[bold yellow]Scanning IP {ip_address}[/bold yellow]"
+    ):
         try:
-            if s.connect_ex((ip_address, port)) == 0:
-                open_ports.append(port)
-                s.close()
+            found_ports = scan_ports(ip_address, port)
         except socket.gaierror:
-            error=True
-            break
+            console.print(f"[bold red]{ip_address} is an invalid address[/]")
 
-    if error:    
-        console.print(f"[bold red]{ip_address} is an invalid address[/]")
-    elif not open_ports:
-        console.print(f"[bold red]No open ports found in {ip_address}[/]")
-    else:
-        console.print(
-            f"[magenta]The open ports in[/magenta] [reverse cyan]{ip_address}[/reverse cyan][magenta] are:[/magenta]"
-        )
-        for port in open_ports:
-            console.print(f"- {ip_address}:[bold red]{port}[/bold red]")
+    print_result(ip_address, found_ports)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Scan open ports easily")
-    parser.add_argument('--url', '-u', type=str, help="URL to be scanned", required=True)
+    parser.add_argument(
+        "--url", "-u", type=str, help="URL to be scanned", required=True
+    )
+    parser.add_argument(
+        "--lowest-port",
+        "-lp",
+        type=int,
+        required=False,
+        default=0,
+        help="Define which port (0-65535) should start being scanned",
+    )
+    parser.add_argument(
+        "--highest-port",
+        "-hp",
+        type=int,
+        required=False,
+        default=65535,
+        help="Define which port (0-65535) should finish being scanned",
+    )
 
     args = parser.parse_args()
-    scan_ports(ip_address=args.url)
+    run_scan(ip_address=args.url, lowest_port=args.lowest_port, highest_port=args.highest_port)
