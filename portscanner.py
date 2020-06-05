@@ -4,14 +4,16 @@ import argparse
 from rich.progress import track
 from rich.console import Console
 
-from helpers import validate_port_range, print_result
+from helpers import validate_port_range, print_result, validate_timeout
 
 open_ports = []
 console = Console()
 
 
-def scan_ports(ip_address, port):
+def scan_ports(ip_address, port, timeout):
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+    s.settimeout(timeout)
 
     if s.connect_ex((ip_address, port)) == 0:
         open_ports.append(port)
@@ -20,23 +22,25 @@ def scan_ports(ip_address, port):
     return open_ports
 
 
-def run_scan(ip_address, lowest_port=0, highest_port=65535):
+def run_scan(ip_address, timeout=0, lowest_port=0, highest_port=65535):
     found_ports = []
 
     try:
         validate_port_range(lowest_port, highest_port)
+        validate_timeout(timeout)
     except Exception as e:
-        if hasattr(e, 'message'):
+        if hasattr(e, "message"):
             console.print(e.message, style="bold red")
         else:
             console.print(e, style="bold red")
         return
 
     for port in track(
-        range(lowest_port, highest_port+1), f"[bold yellow]Scanning IP {ip_address}[/bold yellow]"
+        range(lowest_port, highest_port + 1),
+        f"[bold yellow]Scanning IP {ip_address}[/bold yellow]",
     ):
         try:
-            found_ports = scan_ports(ip_address, port)
+            found_ports = scan_ports(ip_address, port, timeout)
         except socket.gaierror:
             console.print(f"[bold red]{ip_address} is an invalid address[/]")
 
@@ -47,6 +51,14 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Scan open ports easily")
     parser.add_argument(
         "--url", "-u", type=str, help="URL to be scanned", required=True
+    )
+    parser.add_argument(
+        "--timeout",
+        "-t",
+        type=float,
+        help="Set connection timeout value (in seconds)",
+        default=0,
+        required=False,
     )
     parser.add_argument(
         "--lowest-port",
@@ -66,4 +78,9 @@ if __name__ == "__main__":
     )
 
     args = parser.parse_args()
-    run_scan(ip_address=args.url, lowest_port=args.lowest_port, highest_port=args.highest_port)
+    run_scan(
+        ip_address=args.url,
+        timeout=args.timeout,
+        lowest_port=args.lowest_port,
+        highest_port=args.highest_port,
+    )

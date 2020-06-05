@@ -14,6 +14,10 @@ def validate_port_range(lowest_port, highest_port):
     if highest_port > 65535:
         raise Exception("The highest port can't be higher than 65535.")
 
+def validate_timeout(timeout):
+    if timeout < 0:
+        raise Exception("You can't set timeout as a negative value.")
+
 
 def print_result(ip_address, found_ports=None):
     if not found_ports:
