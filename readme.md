@@ -8,7 +8,7 @@ pip install -r requirements.txt
 ```
 ------------
 
-## Usage
+## Basic Usage
 ```
 python portscanner.py -u ip_address
 ```
