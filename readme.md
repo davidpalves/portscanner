@@ -16,3 +16,27 @@ Or
 ```
 python portscanner.py --url ip_address
 ```
+
+#### Arguments accepted
+
+For getting the all arguments you can use, execute `python portscanner.py -h`
+
+```
+usage: portscanner.py [-h] --url URL [--timeout TIMEOUT]
+                      [--lowest-port LOWEST_PORT]
+                      [--highest-port HIGHEST_PORT]
+
+Scan open ports easily
+
+optional arguments:
+  -h, --help            show this help message and exit
+  --url URL, -u URL     URL to be scanned
+  --timeout TIMEOUT, -t TIMEOUT
+                        Set connection timeout value (in seconds)
+  --lowest-port LOWEST_PORT, -lp LOWEST_PORT
+                        Define which port (0-65535) should start being scanned
+  --highest-port HIGHEST_PORT, -hp HIGHEST_PORT
+                        Define which port (0-65535) should finish being
+                        scanned
+
+```
