@@ -11,9 +11,9 @@ console = Console()
 
 
 def scan_ports(ip_address, port, timeout):
+    socket.setdefaulttimeout(timeout)
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
-    s.settimeout(timeout)
 
     if s.connect_ex((ip_address, port)) == 0:
         open_ports.append(port)
@@ -22,7 +22,7 @@ def scan_ports(ip_address, port, timeout):
     return open_ports
 
 
-def run_scan(ip_address, timeout=0, lowest_port=0, highest_port=65535):
+def run_scan(ip_address, timeout=None, lowest_port=0, highest_port=65535):
     found_ports = []
 
     try:
@@ -57,7 +57,6 @@ if __name__ == "__main__":
         "-t",
         type=float,
         help="Set connection timeout value (in seconds)",
-        default=0,
         required=False,
     )
     parser.add_argument(
