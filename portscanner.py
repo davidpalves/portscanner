@@ -1,50 +1,60 @@
 import socket
 import argparse
+from time import time
 
 from rich.progress import track
 from rich.console import Console
 
 from helpers import validate_port_range, print_result, validate_timeout
 
-open_ports = []
-console = Console()
+
+class PortScanner():
+    def __init__(self):
+        self.open_ports = []
+        self.console = Console()
+
+    def scan_ports(self, ip_address, port, timeout):
+        connection = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+        connection.settimeout(timeout)
+
+        if connection.connect_ex((ip_address, port)) == 0:
+            self.open_ports.append(port)
+            connection.close()
+
+        return self.open_ports
 
 
-def scan_ports(ip_address, port, timeout):
-    socket.setdefaulttimeout(timeout)
-    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-
-
-    if s.connect_ex((ip_address, port)) == 0:
-        open_ports.append(port)
-        s.close()
-
-    return open_ports
-
-
-def run_scan(ip_address, timeout=None, lowest_port=0, highest_port=65535):
-    found_ports = []
-
-    try:
-        validate_port_range(lowest_port, highest_port)
-        validate_timeout(timeout)
-    except Exception as e:
-        if hasattr(e, "message"):
-            console.print(e.message, style="bold red")
-        else:
-            console.print(e, style="bold red")
-        return
-
-    for port in track(
-        range(lowest_port, highest_port + 1),
-        f"[bold yellow]Scanning IP {ip_address}[/bold yellow]",
-    ):
+    def run_scan(self, ip_address, timeout=None, lowest_port=0, highest_port=65535):
         try:
-            found_ports = scan_ports(ip_address, port, timeout)
-        except socket.gaierror:
-            console.print(f"[bold red]{ip_address} is an invalid address[/]")
+            validate_port_range(lowest_port, highest_port)
+            validate_timeout(timeout)
+        except Exception as e:
+            if hasattr(e, "message"):
+                self.console.print(e.message, style="bold red")
+            else:
+                self.console.print(e, style="bold red")
+            return
 
-    print_result(ip_address, found_ports)
+        start = time()
+        for port in track(
+            range(lowest_port, highest_port + 1),
+            f"[bold yellow]Scanning IP {ip_address}[/bold yellow]",
+        ):
+            try:
+                self.scan_ports(ip_address, port, timeout)
+            except socket.gaierror:
+                self.console.print(f"[bold red]{ip_address} is an invalid address[/]")
+            except KeyboardInterrupt:
+                end = time()
+                elapsed_time = end - start
+                print('\n')
+                print_result(ip_address, elapsed_time, self.open_ports)
+                return
+
+        end = time()
+        elapsed_time = end - start
+        print_result(ip_address, elapsed_time, self.open_ports)
 
 
 if __name__ == "__main__":
@@ -77,7 +87,8 @@ if __name__ == "__main__":
     )
 
     args = parser.parse_args()
-    run_scan(
+    scanner = PortScanner()
+    scanner.run_scan(
         ip_address=args.url,
         timeout=args.timeout,
         lowest_port=args.lowest_port,

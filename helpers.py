@@ -19,7 +19,7 @@ def validate_timeout(timeout):
         raise Exception("You can't set timeout as a negative value.")
 
 
-def print_result(ip_address, found_ports=None):
+def print_result(ip_address, elapsed_time, found_ports=None):
     if not found_ports:
         console.print(f"[bold red]No open ports found in {ip_address}[/]")
     else:
@@ -28,3 +28,6 @@ def print_result(ip_address, found_ports=None):
         )
         for port in found_ports:
             console.print(f"- {ip_address}:[bold red]{port}[/bold red]")
+
+    if elapsed_time:
+        console.print(f"\nElapsed time: {round(elapsed_time, 2)}s\n\n", style="dim yellow")
